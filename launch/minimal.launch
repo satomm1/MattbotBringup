@@ -1,0 +1,12 @@
+<!-- minimal.launch -->
+<launch>
+
+  <!-- Specify the package name -->
+  <arg name="package" default="MattbotBringup"/>
+
+  <!-- Launch a node from the package -->
+  <node pkg="$(arg package)" type="your_node_executable" name="minimal_node" output="screen">
+    <!-- Add any additional node-specific parameters here -->
+  </node>
+
+</launch>
