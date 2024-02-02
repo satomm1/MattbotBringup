@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>MattbotBringup</name>
+  <name>mattbot_bringup</name>
   <version>0.0.0</version>
-  <description>The MattbotBringup package</description>
+  <description>The mattbot_bringup package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <maintainer email="satomm@stanford.edu">Matthew Sato</maintainer>
