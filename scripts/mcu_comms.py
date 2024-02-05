@@ -109,7 +109,7 @@ class MCU_Comms:
                        ang_vel_bytes[3],ang_vel_bytes[2],ang_vel_bytes[1],ang_vel_bytes[0],  # Angular velocity
                        0,0,0,0,0,0,0]  # Padding
             rcvd = self.spi.xfer(vel_msg)
-            print(rcvd)
+            # print(rcvd)
 
             # Now do something with the received data
             if rcvd[0] == 7: # Received dead reckoning data
