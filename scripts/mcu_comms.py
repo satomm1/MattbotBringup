@@ -3,6 +3,7 @@ import time
 import spidev
 import struct
 
+from std_msgs import Header
 from geometry_msgs.msg import Twist, Pose, Point, Quaternion, Vector3
 from nav_msgs.msg import Odometry
 from tf2_msgs.msg import TFMessage
@@ -115,8 +116,8 @@ class MCU_Comms:
             if rcvd[0] == 7: # Received dead reckoning data
 
                 # Extract the dead reckoning data (converts from bytes to float)
-                V_dr = bytes_to_float(rcvd[1:5])
-                w_dr = bytes_to_float(rcvd[5:9])
+                V_dr = bytes_to_float(list(reversed(rcvd[1:5])))
+                w_dr = bytes_to_float(list(reversed(rcvd[5:9])))
 
                 # Load the data into an Odometry Message
                 odom = Odometry()
@@ -124,9 +125,23 @@ class MCU_Comms:
                 odom.header.frame_id = "odom"
                 odom.header.seq = sensor_sequence
                 odom.child_frame_id = "base_footprint"
-                odom.pose.pose = Pose(Point(pos_x, pos_y, 0),
-                                      quaternion_from_euler(0, 0, pos_theta * 3.14159 / 180))  # position/orientation
-                odom.twist.twist = Twist(Vector3(V_dr, 0, 0), Vector3(0, 0, w_dr))  # linear/angular velocity
+                
+                odom.pose.pose.position.x = pos_x
+                odom.pose.pose.position.y = pos_y
+                odom.pose.pose.position.z = 0
+                
+                odom.pose.pose.orientation.x = 0
+                odom.pose.pose.orientation.y = 0
+                odom.pose.pose.orientation.z = 0
+                odom.pose.pose.orientation.w = pos_theta
+                
+                odom.twist.twist.linear.x = V_dr
+                odom.twist.twist.linear.y = 0
+                odom.twist.twist.linear.z = 0
+                
+                odom.twist.twist.angular.x = 0
+                odom.twist.twist.angular.y = 0
+                odom.twist.twist.angular.z = w_dr
 
                 self.odom_pub.publish(odom)  # actually publish the data
 
@@ -134,10 +149,12 @@ class MCU_Comms:
 
             elif rcvd[0] == 8:  # Recieved position data
 
+		
+
                 # Extract the position data (converts from bytes to float)
-                pos_x = bytes_to_float(rcvd[1:5])
-                pos_y = bytes_to_float(rcvd[5:9])
-                pos_theta = bytes_to_float(rcvd[9:13])
+                pos_x = bytes_to_float(list(reversed(rcvd[1:5])))
+                pos_y = bytes_to_float(list(reversed(rcvd[5:9])))
+                pos_theta = bytes_to_float(list(reversed(rcvd[9:13])))
 
                 # Load the data into a TF Message
                 tf = TFMessage()
