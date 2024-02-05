@@ -3,9 +3,8 @@ import time
 import spidev
 import struct
 
-from std_msgs import Header
 from geometry_msgs.msg import Twist, Pose, Point, Quaternion, Vector3
-from nav_msgs.msg import Odometry
+from nav_msgs.msg import Odometry, TransformStamped
 from tf2_msgs.msg import TFMessage
 from tf.transformations import quaternion_from_euler
 
@@ -157,15 +156,19 @@ class MCU_Comms:
                 pos_theta = bytes_to_float(list(reversed(rcvd[9:13])))
 
                 # Load the data into a TF Message
-                tf = TFMessage()
-                tf.transforms.header.stamp = rospy.Time.now()
-                tf.transforms.header.frame_id = "odom"
-                tf.transforms.header.seq = sensor_sequence
-                tf.transforms.child_frame_id = "base_footprint"
-                tf.transforms.transform.translation = Vector3(pos_x, pos_y, 0)
-                tf.transforms.transform.rotations = quaternion_from_euler(0, 0, pos_theta * 3.14159 / 180)
+                tf_msg = TFMessage()
+                transform_stamped = TransformStamped()
+                
+                transform_stamped.header.stamp = rospy.Time.now()
+                transform_stamped.header.frame_id = "odom"
+                transform_stamped.header.seq = sensor_sequence
+                transform_stamped.child_frame_id = "base_footprint"
+                transform_stamped.transform.translation = Vector3(pos_x, pos_y, 0)
+                transform_stamped.transform.rotations = quaternion_from_euler(0, 0, pos_theta * 3.14159 / 180)
+                
+                tf_msg.transforms.append(transform_stamped)
 
-                self.tf_pub.publish(tf)  # actually publish the data
+                self.tf_pub.publish(tf_msg)  # actually publish the data
 
             elif rcvd[0] == 9: # Received IMU data
                 pass
