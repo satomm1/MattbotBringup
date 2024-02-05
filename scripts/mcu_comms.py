@@ -129,10 +129,12 @@ class MCU_Comms:
                 odom.pose.pose.position.y = pos_y
                 odom.pose.pose.position.z = 0
                 
-                odom.pose.pose.orientation.x = 0
-                odom.pose.pose.orientation.y = 0
-                odom.pose.pose.orientation.z = 0
-                odom.pose.pose.orientation.w = pos_theta*3.14/180
+                rotation = quaternion_from_euler(0,0, pos_theta*3.14/180)
+                
+                odom.pose.pose.orientation.x = rotation.x
+                odom.pose.pose.orientation.y = rotation.y
+                odom.pose.pose.orientation.z = rotation.z
+                odom.pose.pose.orientation.w = rotation.w
                 
                 odom.twist.twist.linear.x = V_dr
                 odom.twist.twist.linear.y = 0
@@ -166,7 +168,13 @@ class MCU_Comms:
                 transform_stamped.transform.translation.x = pos_x
                 transform_stamped.transform.translation.y = pos_y
                 transform_stamped.transform.translation.z = 0
-                transform_stamped.transform.rotations.w = pos_theta*3.14/180
+                
+                rotation = quaternion_from_euler(0,0, pos_theta*3.14/180)
+                
+                transform_stamped.transform.rotation.x = rotation.x
+                transform_stamped.transform.rotation.y = rotation.y
+                transform_stamped.transform.rotation.z = rotation.z
+                transform_stamped.transform.rotation.w = rotation.w
                 
                 tf_msg.transforms.append(transform_stamped)
 
