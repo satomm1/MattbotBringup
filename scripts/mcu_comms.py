@@ -3,8 +3,8 @@ import time
 import spidev
 import struct
 
-from geometry_msgs.msg import Twist, Pose, Point, Quaternion, Vector3
-from nav_msgs.msg import Odometry, TransformStamped
+from geometry_msgs.msg import Twist, Pose, Point, Quaternion, Vector3, TransformStamped
+from nav_msgs.msg import Odometry
 from tf2_msgs.msg import TFMessage
 from tf.transformations import quaternion_from_euler
 
@@ -132,7 +132,7 @@ class MCU_Comms:
                 odom.pose.pose.orientation.x = 0
                 odom.pose.pose.orientation.y = 0
                 odom.pose.pose.orientation.z = 0
-                odom.pose.pose.orientation.w = pos_theta
+                odom.pose.pose.orientation.w = pos_theta*3.14/180
                 
                 odom.twist.twist.linear.x = V_dr
                 odom.twist.twist.linear.y = 0
@@ -163,8 +163,10 @@ class MCU_Comms:
                 transform_stamped.header.frame_id = "odom"
                 transform_stamped.header.seq = sensor_sequence
                 transform_stamped.child_frame_id = "base_footprint"
-                transform_stamped.transform.translation = Vector3(pos_x, pos_y, 0)
-                transform_stamped.transform.rotations = quaternion_from_euler(0, 0, pos_theta * 3.14159 / 180)
+                transform_stamped.transform.translation.x = pos_x
+                transform_stamped.transform.translation.y = pos_y
+                transform_stamped.transform.translation.z = 0
+                transform_stamped.transform.rotations.w = pos_theta*3.14/180
                 
                 tf_msg.transforms.append(transform_stamped)
 
