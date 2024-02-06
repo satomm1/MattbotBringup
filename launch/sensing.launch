@@ -16,7 +16,7 @@
   
   <!-- Launch the LIDAR -->
   <include file="$(find rplidar_ros)/launch/rplidar_a2m12.launch">
-    <arg name="output_loc" value="log"/>
+  
   </include>
 
 </launch>
