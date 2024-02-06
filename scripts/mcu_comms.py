@@ -129,7 +129,7 @@ class MCU_Comms:
                 odom.pose.pose.position.y = pos_y
                 odom.pose.pose.position.z = 0
                 
-                rotation = quaternion_from_euler(0,0, pos_theta*3.14/180)
+                rotation = quaternion_from_euler(0,0, pos_theta)
                 rotation = Quaternion(*rotation)
                 
                 odom.pose.pose.orientation.x = rotation.x
@@ -170,7 +170,7 @@ class MCU_Comms:
                 transform_stamped.transform.translation.y = pos_y
                 transform_stamped.transform.translation.z = 0
                 
-                rotation = quaternion_from_euler(0,0, pos_theta*3.14/180)
+                rotation = quaternion_from_euler(0,0, pos_theta)
                 rotation = Quaternion(*rotation)
                 
                 transform_stamped.transform.rotation.x = rotation.x
