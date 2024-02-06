@@ -29,18 +29,6 @@ class MCU_Comms:
         # Publish the TF data
         self.tf_pub = rospy.Publisher("/tf", TFMessage, queue_size=10)
 
-        # Initialize the odometry TF message (world coordinate system)
-        self.odom_tf = TransformStamped()
-        self.odom_tf.header.frame_id = "odom"
-        self.odom_tf.child_frame_id = "odom"
-        self.odom_tf.transform.translation.x = 0
-        self.odom_tf.transform.translation.y = 0
-        self.odom_tf.transform.translation.z = 0
-        self.odom_tf.transform.rotation.x = 0
-        self.odom_tf.transform.rotation.y = 0
-        self.odom_tf.transform.rotation.z = 0
-        self.odom_tf.transform.rotation.w = 1
-
         # Create the SPI object to facilitate SPI communication via Jetson and MCU
         self.spi = spidev.SpiDev()  # Create SPI object
         self.spi.open(0,0)  # open spi port 0, device (CS) 0
@@ -186,7 +174,6 @@ class MCU_Comms:
                 transform_stamped.transform.rotation.z = rotation.z
                 transform_stamped.transform.rotation.w = rotation.w
 
-                tf_msg.transforms.append(self.odom_tf)  # Add the odometry TF
                 tf_msg.transforms.append(transform_stamped)  # Add the new TF
 
                 self.tf_pub.publish(tf_msg)  # actually publish the data
