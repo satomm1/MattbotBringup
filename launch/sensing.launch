@@ -18,5 +18,10 @@
   <include file="$(find rplidar_ros)/launch/rplidar_a2m12.launch">
   
   </include>
+  
+  <!-- Launch the Camera -->
+  <include file="$(find astra_camera)/launch/astra.launch">
+  
+  </include>
 
 </launch>

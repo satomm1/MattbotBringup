@@ -46,7 +46,7 @@ class MCU_Comms:
                 
         self.transform_stamped_cam.header.stamp = rospy.Time.now()
         self.transform_stamped_cam.header.frame_id = "base_footprint"
-        self.transform_stamped_cam.header.seq = sensor_sequence
+        self.transform_stamped_cam.header.seq = 0
         self.transform_stamped_cam.child_frame_id = "camera_link"
         self.transform_stamped_cam.transform.translation.x = 0.127
         self.transform_stamped_cam.transform.translation.y = 0
