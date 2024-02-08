@@ -115,6 +115,9 @@ class MCU_Comms:
         This is the main loop for the MCU communication node
         """
         self.mcu_startup()
+        
+        # Execute loop at 12.5 Hz: every topic published at 12.5*4=50 Hz
+        rate.rospy.Rate(12.5)
 
         sensor_sequence = 0  # Sequence number for sensor messages
         while not rospy.is_shutdown():
@@ -205,7 +208,8 @@ class MCU_Comms:
             elif rcvd[0] == 10: # Received accleration data
                 pass
 
-            time.sleep(0.01)
+            # time.sleep(0.01)
+            rate.sleep()
 
     def shutdown(self):
         """
