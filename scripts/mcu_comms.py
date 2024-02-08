@@ -117,7 +117,7 @@ class MCU_Comms:
         self.mcu_startup()
         
         # Execute loop at 200 Hz: every topic published at 200/4=50 Hz
-        rate.rospy.Rate(200)
+        rate = rospy.Rate(200)
 
         sensor_sequence = 0  # Sequence number for sensor messages
         while not rospy.is_shutdown():
