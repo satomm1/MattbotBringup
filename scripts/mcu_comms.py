@@ -59,6 +59,24 @@ class MCU_Comms:
         self.transform_stamped_cam.transform.rotation.z = rotation.z
         self.transform_stamped_cam.transform.rotation.w = rotation.w
         
+        # This is the transform to give relation between map and odom
+        self.transform_stamped_map = TransformStamped()
+                
+        self.transform_stamped_map.header.stamp = rospy.Time.now()
+        self.transform_stamped_map.header.frame_id = "map"
+        self.transform_stamped_map.header.seq = 0
+        self.transform_stamped_map.child_frame_id = "odom"
+        self.transform_stamped_map.transform.translation.x = 0.127
+        self.transform_stamped_map.transform.translation.y = 0
+        self.transform_stamped_map.transform.translation.z = 0
+                
+        rotation = quaternion_from_euler(0,0,0)
+        rotation = Quaternion(*rotation)        
+        self.transform_stamped_map.transform.rotation.x = rotation.x
+        self.transform_stamped_map.transform.rotation.y = rotation.y
+        self.transform_stamped_map.transform.rotation.z = rotation.z
+        self.transform_stamped_map.transform.rotation.w = rotation.w
+        
 
     def mcu_startup(self):
         """
@@ -200,6 +218,9 @@ class MCU_Comms:
                 
                 self.transform_stamped_cam.header.stamp = rospy.Time.now()
                 tf_msg.transforms.append(self.transform_stamped_cam)
+                
+                self.transform_stamped_map.header.stamp = rospy.Time.now()
+                tf_msg.transforms.append(self.transform_stamped_map)
 
                 self.tf_pub.publish(tf_msg)  # actually publish the data
 
