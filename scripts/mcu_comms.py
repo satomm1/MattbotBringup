@@ -66,7 +66,7 @@ class MCU_Comms:
         self.transform_stamped_map.header.frame_id = "map"
         self.transform_stamped_map.header.seq = 0
         self.transform_stamped_map.child_frame_id = "odom"
-        self.transform_stamped_map.transform.translation.x = 0.127
+        self.transform_stamped_map.transform.translation.x = 0
         self.transform_stamped_map.transform.translation.y = 0
         self.transform_stamped_map.transform.translation.z = 0
                 
