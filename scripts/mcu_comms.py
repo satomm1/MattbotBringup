@@ -142,7 +142,7 @@ class MCU_Comms:
             self.spi.writebytes([55])
             time.sleep(0.000001)
             rcvd = self.spi.xfer(vel_msg)
-            print(rcvd)
+            # print(rcvd)
 
             # Now do something with the received data
             if rcvd[0] == 7: # Received dead reckoning data
