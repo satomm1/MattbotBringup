@@ -71,6 +71,7 @@ class MCU_Comms:
         bringup_confirmed = False
         while not bringup_confirmed:
             bringup_message = [90, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            self.spi.writebytes([55])
             rcvd = self.spi.xfer(bringup_message)
             print(rcvd)
 
@@ -83,6 +84,7 @@ class MCU_Comms:
 
         # Send confirmation message to MCU
         confirmation_message = [90, 170, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.spi.writebytes([55])
         rcvd = self.spi.xfer2(confirmation_message)
         print(rcvd)
 
@@ -109,6 +111,16 @@ class MCU_Comms:
         rcvd = self.spi.xfer(end_msg)
         print(rcvd)
 
+    def resync(self):
+        """
+        Used to resync when we misalign with MCU
+        """
+        for ii in range(20):
+            self.spi.writebytes(66)
+        self.spi.writebytes(77)
+        self.spi.writebytes(55)
+       
+
     def run(self):
         """
         This is the main loop for the MCU communication node
@@ -127,8 +139,10 @@ class MCU_Comms:
                        lin_vel_bytes[3],lin_vel_bytes[2],lin_vel_bytes[1],lin_vel_bytes[0],  # Linear velocity
                        ang_vel_bytes[3],ang_vel_bytes[2],ang_vel_bytes[1],ang_vel_bytes[0],  # Angular velocity
                        0,0,0,0,0,0,0]  # Padding
+            self.spi.writebytes([55])
+            time.sleep(0.000001)
             rcvd = self.spi.xfer(vel_msg)
-            # print(rcvd)
+            print(rcvd)
 
             # Now do something with the received data
             if rcvd[0] == 7: # Received dead reckoning data
@@ -214,6 +228,7 @@ class MCU_Comms:
         This function is called when the node is shutdown
         """
         # Send shutdown message to MCU
+        self.spi.writebytes([55])
         shutdown_message = [90, 0b11110000,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
         rcvd = self.spi.xfer(shutdown_message)
 
