@@ -4,6 +4,7 @@ import spidev
 import struct
 
 from geometry_msgs.msg import Twist, Pose, Point, Quaternion, Vector3, TransformStamped
+from sensor_msgs.msg import Imu
 from nav_msgs.msg import Odometry
 from tf2_msgs.msg import TFMessage
 from tf.transformations import quaternion_from_euler
@@ -28,6 +29,9 @@ class MCU_Comms:
 
         # Publish the TF data
         self.tf_pub = rospy.Publisher("/tf", TFMessage, queue_size=10)
+        
+        # Publish the imu data
+        self.imu_pub = rospy.Publisher("/imu/data", Imu, queue_size=10)
 
         # Create the SPI object to facilitate SPI communication via Jetson and MCU
         self.spi = spidev.SpiDev()  # Create SPI object
@@ -217,8 +221,32 @@ class MCU_Comms:
                 self.tf_pub.publish(tf_msg)  # actually publish the data
 
             elif rcvd[0] == 9: # Received IMU data
-                pass
-            elif rcvd[0] == 10: # Received accleration data
+                acc_x = bytes_to_float(list(reversed(rcvd[1:5])))
+                acc_y = bytes_to_float(list(reversed(rcvd[5:9])))
+                ang_vel_z = bytes_to_float(list(reversed(rcvd[9:13])))
+                
+                imu = Imu()
+                # provide header information
+                imu.header.stamp = rospy.Time.now()
+                imu.header.frame_id = "imu"
+                imu.header.seq = sensor_sequence
+                
+                # Load the linear accel data
+                imu.linear_acceleration.x = acc_x
+                imu.linear_acceleration.y = acc_y
+                imu.linear_acceleration.z = 0
+                
+                # Load the angular velocity data
+                imu.angular_velocity.x = 0
+                imu.angular_velocity.y = 0
+                imu.angular_velocity.z = ang_vel_z
+                
+                # Don't have orientation estimate so set this as the flag
+                imu.orientation_covariance[0] = -1.0
+                
+                self.imu_pub.publish(imu)  # actually publish the data
+                
+            elif rcvd[0] == 10: # Received reflective sensor data
                 pass
 
             rate.sleep()
