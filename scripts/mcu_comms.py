@@ -8,6 +8,7 @@ from sensor_msgs.msg import Imu
 from nav_msgs.msg import Odometry
 from tf2_msgs.msg import TFMessage
 from tf.transformations import quaternion_from_euler
+from std_msgs.msg import Float32
 
 BAUD_RATE = 1000000 # Baud rate for SPI
 
@@ -32,6 +33,11 @@ class MCU_Comms:
         
         # Publish the imu data
         self.imu_pub = rospy.Publisher("/imu/data", Imu, queue_size=10)
+        
+        # Publish the reflective sensor data
+        self.left_sensor_pub = rospy.Publisher('/cliff_sensor/left_sensor', Float32, queue_size=10)
+        self.front_sensor_pub = rospy.Publisher('/cliff_sensor/front_sensor', Float32, queue_size=10)
+        self.right_sensor_pub = rospy.Publisher('/cliff_sensor/right_sensor', Float32, queue_size=10)
 
         # Create the SPI object to facilitate SPI communication via Jetson and MCU
         self.spi = spidev.SpiDev()  # Create SPI object
@@ -247,7 +253,15 @@ class MCU_Comms:
                 self.imu_pub.publish(imu)  # actually publish the data
                 
             elif rcvd[0] == 10: # Received reflective sensor data
-                pass
+                right_sensor = bytes_to_float(list(reversed(rcvd[1:5])))
+                front_sensor = bytes_to_float(list(reversed(rcvd[5:9])))
+                left_sensor = bytes_to_float(list(reversed(rcvd[9:13])))
+                
+                # Actually publish the data
+                self.right_sensor_pub.publish(right_sensor)
+                self.front_sensor_pub.publish(front_sensor)
+                self.left_sensor_pub.publish(left_sensor)
+                
 
             rate.sleep()
 
