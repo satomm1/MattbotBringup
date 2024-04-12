@@ -253,14 +253,14 @@ class MCU_Comms:
                 self.imu_pub.publish(imu)  # actually publish the data
                 
             elif rcvd[0] == 10: # Received reflective sensor data
-                right_sensor = bytes_to_float(list(reversed(rcvd[1:5])))
-                front_sensor = bytes_to_float(list(reversed(rcvd[5:9])))
-                left_sensor = bytes_to_float(list(reversed(rcvd[9:13])))
+                right_sensor = bytes_to_unsigned_int(reversed(rcvd[1:3]))
+                front_sensor = bytes_to_unsigned_int(reversed(rcvd[3:5]))
+                left_sensor = bytes_to_unsigned_int(reversed(rcvd[5:7]))
                 
                 # Actually publish the data
-                self.right_sensor_pub.publish(right_sensor)
-                self.front_sensor_pub.publish(front_sensor)
-                self.left_sensor_pub.publish(left_sensor)
+                self.right_sensor_pub.publish(float(right_sensor))
+                self.front_sensor_pub.publish(float(front_sensor))
+                self.left_sensor_pub.publish(float(left_sensor))
                 
 
             rate.sleep()
@@ -287,12 +287,17 @@ def float_to_bytes(float_number):
     int_list = struct.unpack('BBBB', packed_data)
 
     return int_list
+    
 
 def bytes_to_float(byte_array):
     # Pack the bytes into a 32-bit float
     float_number = struct.unpack('f', bytes(byte_array))[0]
 
     return float_number
+    
+def bytes_to_unsigned_int(high_byte, low_byte):
+    # Pack the bytes into a 16 bit unsigned int
+    return (high_byte << 8) | low_byte
 
 def mcu_shutdown():
     print("Shutting down MCU communication")
