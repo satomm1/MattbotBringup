@@ -253,9 +253,9 @@ class MCU_Comms:
                 self.imu_pub.publish(imu)  # actually publish the data
                 
             elif rcvd[0] == 10: # Received reflective sensor data
-                right_sensor = bytes_to_unsigned_int(reversed(rcvd[1:3]))
-                front_sensor = bytes_to_unsigned_int(reversed(rcvd[3:5]))
-                left_sensor = bytes_to_unsigned_int(reversed(rcvd[5:7]))
+                right_sensor = bytes_to_unsigned_int(rcvd[1], rcvd[2])
+                front_sensor = bytes_to_unsigned_int(rcvd[3], rcvd[4])
+                left_sensor = bytes_to_unsigned_int(rcvd[5], rcvd[6])
                 
                 # Actually publish the data
                 self.right_sensor_pub.publish(float(right_sensor))
