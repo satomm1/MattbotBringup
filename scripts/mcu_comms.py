@@ -2,6 +2,10 @@ import rospy
 import time
 import spidev
 import struct
+import socket
+
+from confluent_kafka import Producer, KafkaException, KafkaError
+from confluent_kafka.admin import AdminClient, NewTopic
 
 from geometry_msgs.msg import Twist, Pose, Point, Quaternion, Vector3, TransformStamped
 from sensor_msgs.msg import Imu
@@ -21,9 +25,6 @@ class MCU_Comms:
 
         # Initialize the node
         rospy.init_node('mcu_comms', anonymous=True)
-
-        # Subscribe to the cmd_vel topic to receive velocity commands
-        rospy.Subscriber("/cmd_vel", Twist, self.vel_callback)
 
         # Publish the odometry data
         self.odom_pub = rospy.Publisher("/odom", Odometry, queue_size=10)
@@ -68,6 +69,30 @@ class MCU_Comms:
         self.transform_stamped_cam.transform.rotation.y = rotation.y
         self.transform_stamped_cam.transform.rotation.z = rotation.z
         self.transform_stamped_cam.transform.rotation.w = rotation.w        
+
+        self.stream_with_kafka = rospy.get_param('~stream_with_kafka', False)
+        bootstrap_server = rospy.get_param('~bootstrap_server', '192.168.50.2:29094')
+        if self.stream_with_kafka:
+            try:
+                conf = {'bootstrap.servers': bootstrap_server,
+                        'client.id': socket.gethostname()}
+
+                self.producer = Producer(conf)
+                metadata = self.producer.list_topics(timeout=5)
+                if metadata.topics:
+                    print("Broker is available. Connecting...")
+                    # Connect to the broker and perform further operations
+
+                    self.kafka_admin = AdminClient(conf)
+                else:
+                    print("Broker is not available.")
+            except KafkaException as e:
+                print(f"Error connecting to broker: {e}")
+                self.stream_with_kafka = False
+
+        # Subscribe to the cmd_vel topic to receive velocity commands
+        rospy.Subscriber("/cmd_vel", Twist, self.vel_callback)
+
 
     def mcu_startup(self):
         """
@@ -275,6 +300,10 @@ class MCU_Comms:
         rcvd = self.spi.xfer(shutdown_message)
 
         self.spi.close()
+
+        if self.stream_with_kafka:
+            self.producer.flush()
+            self.producer.close()
 
 def float_to_bytes(float_number):
     """

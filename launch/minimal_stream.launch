@@ -1,0 +1,19 @@
+<!-- minimal.launch -->
+<launch>
+
+  <!-- Specify the package name -->
+  <arg name="package" default="mattbot_bringup"/>
+
+  <!-- Launch a node from the package -->
+  <node pkg="$(arg package)" type="mcu_comms.py" name="mcu_comms_node" output="screen">
+    <!-- Add any additional node-specific parameters here -->
+    <param name="bootstrap_server" value="192.168.50.2:29094"/>
+    <param name="stream_with_kafka" value="true"/>
+  </node>
+
+  <!-- Launch the twist multiplexer -->
+  <include file="$(find twist_mux)/launch/twist_mux.launch">
+    <arg name="output_loc" value="log"/>
+  </include>
+
+</launch>
