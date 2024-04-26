@@ -3,9 +3,11 @@ import time
 import spidev
 import struct
 import socket
+import json
 
 from confluent_kafka import Producer, KafkaException, KafkaError
 from confluent_kafka.admin import AdminClient, NewTopic
+from rospy_message_converter import message_converter
 
 from geometry_msgs.msg import Twist, Pose, Point, Quaternion, Vector3, TransformStamped
 from sensor_msgs.msg import Imu
@@ -74,8 +76,10 @@ class MCU_Comms:
         bootstrap_server = rospy.get_param('~bootstrap_server', '192.168.50.2:29094')
         if self.stream_with_kafka:
             try:
-                conf = {'bootstrap.servers': bootstrap_server,
-                        'client.id': socket.gethostname()}
+                conf = {
+                    'bootstrap.servers': bootstrap_server,
+                    'client.id': socket.gethostname()
+                }
 
                 self.producer = Producer(conf)
                 metadata = self.producer.list_topics(timeout=5)
@@ -84,6 +88,14 @@ class MCU_Comms:
                     # Connect to the broker and perform further operations
 
                     self.kafka_admin = AdminClient(conf)
+
+                    # If the imu and odom topics don't exist yet let's create them
+                    if "imu" not in metadata.topics:
+                        new_topics = [NewTopic(topic="imu", num_partitions=1, replication_factor=1)]
+                        self.kafka_admin.create_topics(new_topics)
+                    if "odom" not in metadata.topics:
+                        new_topics = [NewTopic(topic="odom", num_partitions=1, replication_factor=1)]
+                        self.kafka_admin.create_topics(new_topics)
                 else:
                     print("Broker is not available.")
             except KafkaException as e:
@@ -215,6 +227,15 @@ class MCU_Comms:
 
                 self.odom_pub.publish(odom)  # actually publish the data
 
+                if self.stream_with_kafka:
+                    odom_dict = message_converter.convert_ros_message_to_dictionary(odom)
+                    odom_dict['robot'] = self.robot_id
+
+                    # serialize the data before sending it
+                    odom_dict = json.dumps(odom_dict).encode('utf-8')
+
+                    self.producer.produce("odom", odom_dict)
+
                 sensor_sequence = sensor_sequence + 1
 
             elif rcvd[0] == 8:  # Recieved position data
@@ -276,6 +297,11 @@ class MCU_Comms:
                 imu.orientation_covariance[0] = -1.0
                 
                 self.imu_pub.publish(imu)  # actually publish the data
+
+                if self.stream_with_kafka:
+                    imu_dict = message_converter.convert_ros_message_to_dictionary(imu)
+                    imu_dict['robot'] = self.robot_id
+                    # self.producer.produce("imu", value=imu_dict)
                 
             elif rcvd[0] == 10: # Received reflective sensor data
                 right_sensor = bytes_to_unsigned_int(rcvd[1], rcvd[2])
