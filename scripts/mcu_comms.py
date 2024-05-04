@@ -4,6 +4,7 @@ import spidev
 import struct
 import socket
 import json
+import os
 
 from confluent_kafka import Producer, KafkaException, KafkaError
 from confluent_kafka.admin import AdminClient, NewTopic
@@ -28,27 +29,27 @@ class MCU_Comms:
         # Initialize the node
         rospy.init_node('mcu_comms', anonymous=True)
 
+        self.robot_id = os.environ['ROBOT_ID']  # Get and store the robot ID
+
         # Publish the odometry data
-        self.odom_pub = rospy.Publisher("/odom", Odometry, queue_size=10)
+        self.odom_pub = rospy.Publisher("/robot" + str(self.robot_id) +  "/odom", Odometry, queue_size=10)
 
         # Publish the TF data
-        self.tf_pub = rospy.Publisher("/tf", TFMessage, queue_size=10)
+        self.tf_pub = rospy.Publisher("/robot" + str(self.robot_id) +  "/tf", TFMessage, queue_size=10)
         
         # Publish the imu data
-        self.imu_pub = rospy.Publisher("/imu/data", Imu, queue_size=10)
+        self.imu_pub = rospy.Publisher("/robot" + str(self.robot_id) +  "/imu/data", Imu, queue_size=10)
         
         # Publish the reflective sensor data
-        self.left_sensor_pub = rospy.Publisher('/cliff_sensor/left_sensor', Float32, queue_size=10)
-        self.front_sensor_pub = rospy.Publisher('/cliff_sensor/front_sensor', Float32, queue_size=10)
-        self.right_sensor_pub = rospy.Publisher('/cliff_sensor/right_sensor', Float32, queue_size=10)
+        self.left_sensor_pub = rospy.Publisher("/robot" + str(self.robot_id) +  '/cliff_sensor/left_sensor', Float32, queue_size=10)
+        self.front_sensor_pub = rospy.Publisher("/robot" + str(self.robot_id) +  '/cliff_sensor/front_sensor', Float32, queue_size=10)
+        self.right_sensor_pub = rospy.Publisher("/robot" + str(self.robot_id) +  '/cliff_sensor/right_sensor', Float32, queue_size=10)
 
         # Create the SPI object to facilitate SPI communication via Jetson and MCU
         self.spi = spidev.SpiDev()  # Create SPI object
         self.spi.open(0,0)  # open spi port 0, device (CS) 0
         self.spi.max_speed_hz = BAUD_RATE  
         self.spi.mode = 0b11  # CPOL = 1, CPHA = 1 (i.e. clock is high when idle, data is clocked in on rising edge)
-
-        self.robot_id = 0x00
 
         # Initialize linear/angular velocity commands
         self.lin_cmd = 0.0
@@ -103,7 +104,7 @@ class MCU_Comms:
                 self.stream_with_kafka = False
 
         # Subscribe to the cmd_vel topic to receive velocity commands
-        rospy.Subscriber("/cmd_vel", Twist, self.vel_callback)
+        rospy.Subscriber("/robot" + str(self.robot_id) + "/cmd_vel", Twist, self.vel_callback)
 
 
     def mcu_startup(self):
@@ -125,8 +126,8 @@ class MCU_Comms:
             # Check if the MCU has confirmed bringup
             if rcvd[0] == 0 and rcvd[1] == 255 and rcvd[2] == 0:
                 bringup_confirmed = True  # MattBot is active
-                self.robot_id = rcvd[3]  # Get and store the robot ID
-                print("Robot ID: " + str(self.robot_id))
+                print("Hardware Robot ID: " + str(rcvd[3]))
+                print("Jetson Robot ID: " + str(self.robot_id))
             time.sleep(0.1)
 
         # Send confirmation message to MCU
