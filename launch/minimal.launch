@@ -4,10 +4,6 @@
   <!-- Specify the package name -->
   <arg name="package" default="mattbot_bringup"/>
 
-  <!-- Specify the robot ID -->
-  <arg name="robot_id" default="/robot0"/>
-  <arg name="cmd_vel_topic" default="/cmd_vel"/>
-
   <!-- Launch a node from the package -->
   <node pkg="$(arg package)" type="mcu_comms.py" name="mcu_comms_node" output="screen">
     <!-- Add any additional node-specific parameters here -->
@@ -16,7 +12,6 @@
   <!-- Launch the twist multiplexer -->
   <include file="$(find twist_mux)/launch/twist_mux.launch">
     <arg name="output_loc" value="log"/>
-    <arg name="cmd_vel_out" value="$(arg robot_id)$(arg cmd_vel_topic)"/>
   </include>
 
 </launch>
