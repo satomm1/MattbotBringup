@@ -1,0 +1,41 @@
+<!-- minimal.launch -->
+<launch>
+
+  <!-- Specify the package name -->
+  <arg name="package" default="mattbot_bringup"/>
+
+  <!-- Launch a node from the package -->
+  <node pkg="$(arg package)" type="mcu_comms.py" name="mcu_comms_node" output="screen">
+    <!-- Add any additional node-specific parameters here -->
+  </node>
+
+  <!-- Launch the twist multiplexer -->
+  <include file="$(find twist_mux)/launch/twist_mux.launch">
+    <arg name="output_loc" value="log"/>
+  </include>
+  
+  <!-- Launch the LIDAR -->
+  <include file="$(find rplidar_ros)/launch/rplidar_a2m12.launch">
+  
+  </include>
+  
+  <!-- Launch the Camera -->
+  <include file="$(find astra_camera)/launch/astra.launch">
+  
+  </include>
+  
+  <!-- Launch the different kafka producers -->
+  <include file="$(find mattbot_kafka_connector)/launch/kafka_transform_producer.launch">
+  </include>
+
+  <include file="$(find mattbot_kafka_connector)/launch/kafka_producer.launch">
+    <arg name="topic" default="scan"/>
+    <arg name="node_name" default="kafka_producer_scan"/>
+  </include>
+
+  <include file="$(find mattbot_kafka_connector)/launch/kafka_producer.launch">
+    <arg name="topic" default="odom"/>
+    <arg name="node_name" default="kafka_producer_odom"/>
+  </include>
+
+</launch>
