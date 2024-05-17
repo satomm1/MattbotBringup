@@ -1,4 +1,5 @@
 import rospy
+import json
 from nav_msgs.msg import OccupancyGrid
 
 import time
@@ -8,7 +9,11 @@ from confluent_kafka.admin import AdminClient, NewTopic
 from pyignite import Client
 
 class MapSubscriber:
-    def __init__(self, ignite_host='ignite_host', ignite_port=10800):
+    def __init__(self, ignite_host='ignite_host', ignite_port=10800, bootstrap_servers='192.168.50.2:29094'):
+
+        # initialize ROS node
+        rospy.init_node('map_subscriber', anonymous=True)
+
         # Connect to Ignite server
         self.client = Client()
         self.client.connect(ignite_host, ignite_port)
@@ -16,6 +21,15 @@ class MapSubscriber:
         # Create map publisher
         self.map_publisher = rospy.Publisher('map', OccupancyGrid, queue_size=10)
 
+        # Connect to Kafka server
+        self.consumer = Consumer({
+            'bootstrap.servers': bootstrap_servers,
+            'group.id': 'mapUpdates',
+            'auto.offset.reset': 'earliest'
+        })
+        self.consumer.subscribe(['map_updates'])
+
+        self.map = OccupancyGrid()
         self.have_map = False
 
     def get_cached_map(self):
@@ -28,50 +42,72 @@ class MapSubscriber:
                 map_metadata = self.client.get_cache('map_metadata').get(1)
                 if map_data:
                     self.have_map = True
-                    return map_data, map_metadata
+
+                    # Convert the strings into the ROS Occupancy grid
+                    self.map.header.frame_id = 'map'
+                    self.map.info.width = map_metadata['width']
+                    self.map.info.height = map_metadata['height']
+                    self.map.info.resolution = map_metadata['resolution']
+                    self.map = OccupancyGrid()
+                    self.map.info.origin.position.x = map_metadata['origin.position.x']
+                    self.map.info.origin.position.y = map_metadata['origin.position.y']
+                    self.map.info.origin.position.z = map_metadata['origin.position.z']
+                    self.map.info.origin.orientation.x = map_metadata['origin.orientation.x']
+                    self.map.info.origin.orientation.y = map_metadata['origin.orientation.y']
+                    self.map.info.origin.orientation.z = map_metadata['origin.orientation.z']
+                    self.map.info.origin.orientation.w = map_metadata['origin.orientation.w']
+                    self.map.data = list(map(int, map_data.split(',')))
+
+                    self.map_publisher.publish(self.map)
+
+                    return True
             except Exception as e:
                 print(f"Error retrieving map: {e}")
             time.sleep(1)
-        return None
+        return False
     
-    def process_map(self, map_data, map_metadata):
-        # Convert the strings into the ROS Occupancy grid
-        map = OccupancyGrid()
-        map.header.frame_id = 'map'
-        map.info.width = map_metadata['width']
-        map.info.height = map_metadata['height']
-        map.info.resolution = map_metadata['resolution']
-        map.info.origin.position.x = map_metadata['origin.position.x']
-        map.info.origin.position.y = map_metadata['origin.position.y']
-        map.info.origin.position.z = map_metadata['origin.position.z']
-        map.info.origin.orientation.x = map_metadata['origin.orientation.x']
-        map.info.origin.orientation.y = map_metadata['origin.orientation.y']
-        map.info.origin.orientation.z = map_metadata['origin.orientation.z']
-        map.info.origin.orientation.w = map_metadata['origin.orientation.w']
-        map.data = list(map(int, map_data.split(',')))
+    def run(self):
+        while not rospy.is_shutdown():
+            # Consume messages from Kafka topic
+            msg = self.consumer.poll(1.0)
+            if msg is None:
+                continue
+            if msg.error():
+                print(f"Error consuming message: {msg.error()}")
+                continue
 
-        # Publish the map
-        self.map_publisher.publish(map)
+            # Process map update message
+            map_update = msg.value()
+            print(f"Received map update: {map_update}")
+            self.process_map_update(map_update)
 
-    # def process_map_update(self, message):
-    #     # Process map update message
-    #     map_update = message.value
-    #     print(f"Received map update: {map_update}")
+            # Publish map to ROS topic
+            self.map_publisher.publish(self.map)
 
-    # def subscribe_to_map_updates(self):
-    #     # Subscribe to Kafka topic for map updates
-    #     consumer = KafkaConsumer('map_update_topic', bootstrap_servers='localhost:9092')
-    #     for message in consumer:
-    #         self.process_map_update(message)
+    def process_map_update(self, message):
+        # Process map update message
+        map_update = json.loads(message)
+        self.map.header.stamp = rospy.Time.now()
 
-    # def disconnect(self):
-    #     # Disconnect from Ignite server
-    #     self.client.close()
+        # map_update is a dict, with keys (x,y) and values (value)
+        for key, value in map_update.items():
+            x, y = key
+            self.map.data[x + y * self.map.info.width] = value
+
+    def disconnect(self):
+        # Disconnect from Ignite server
+        self.client.close()
+
+
 
 if __name__ == '__main__':
     map_subscriber = MapSubscriber()
-    map, map_metadata = map_subscriber.get_cached_map()
-    if map:
-        print("Received cached map")
-    map_subscriber.subscribe_to_map_updates()
+    success = map_subscriber.get_cached_map()
     map_subscriber.disconnect()
+    if success:
+        print("Received cached map")
+        map_subscriber.run()
+        
+    else:
+        print("Failed to receive cached map")
+            
