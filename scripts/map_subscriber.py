@@ -2,7 +2,7 @@ import rospy
 import json
 import numpy as np
 
-from nav_msgs.msg import OccupancyGrid
+from nav_msgs.msg import OccupancyGrid, MapMetaData
 
 import time
 from confluent_kafka import Consumer
@@ -22,6 +22,7 @@ class MapSubscriber:
 
         # Create map publisher
         self.map_publisher = rospy.Publisher('map', OccupancyGrid, queue_size=10)
+        self.map_md_publisher = rospy.Publisher('/map_metadata', MapMetaData, queue_size=10)
 
         # Connect to Kafka server
         self.consumer = Consumer({
@@ -41,6 +42,7 @@ class MapSubscriber:
         self.consumer.subscribe(['map_updates'])
 
         self.map = OccupancyGrid()
+        self.map_md = MapMetaData()
         self.have_map = False
 
     def get_cached_map(self):
@@ -55,7 +57,6 @@ class MapSubscriber:
                     self.have_map = True
 
                     map_metadata = json.loads(map_metadata)
-                    print(map_metadata['resolution'])
 
                     # Convert the strings into the ROS Occupancy grid
                     self.map.header.frame_id = 'map'
@@ -70,8 +71,21 @@ class MapSubscriber:
                     self.map.info.origin.orientation.z = map_metadata['origin.orientation.z']
                     self.map.info.origin.orientation.w = map_metadata['origin.orientation.w']
                     self.map.data = np.frombuffer(map_data, dtype=int)
+
+                    self.map_md.map_load_time = rospy.Time.now()
+                    self.map_md.resolution = map_metadata['resolution']
+                    self.map_md.width = map_metadata['width']
+                    self.map_md.height = map_metadata['height']
+                    self.map_md.origin.position.x = map_metadata['origin.position.x']
+                    self.map_md.origin.position.y = map_metadata['origin.position.y']
+                    self.map_md.origin.position.z = map_metadata['origin.position.z']
+                    self.map_md.origin.orientation.x = map_metadata['origin.orientation.x']
+                    self.map_md.origin.orientation.y = map_metadata['origin.orientation.y']
+                    self.map_md.origin.orientation.z = map_metadata['origin.orientation.z']
+                    self.map_md.origin.orientation.w = map_metadata['origin.orientation.w']
                     
                     self.map_publisher.publish(self.map)
+                    self.map_md_publisher.publish(self.map_md)
 
                     return True
             except Exception as e:
@@ -97,6 +111,7 @@ class MapSubscriber:
 
             # Publish map to ROS topic
             self.map_publisher.publish(self.map)
+            self.map_md_publisher.publish(self.map_md)
 
             rate.sleep()
 
