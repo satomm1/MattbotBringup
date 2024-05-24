@@ -44,6 +44,12 @@
     <arg name="node_name" default="kafka_producer_odom"/>
   </include>
 
+  <include file="$(find mattbot_kafka_connector)/launch/kafka_video_producer.launch">
+    <arg name="ros_topic" default="/camera/color/image_raw"/>
+    <arg name="kafka_topic" default="video"/>
+    <arg name="node_name" default="kafka_producer_video"/>
+  </include>
+
   <!-- Launch the Monte Carlo Localization -->
   <include file="$(find mattbot_mcl)/launch/mcl.launch">
     <!-- No arguments needed -->
