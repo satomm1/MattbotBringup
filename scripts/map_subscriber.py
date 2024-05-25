@@ -38,12 +38,14 @@ class MapSubscriber:
             new_topic = NewTopic('map_updates', num_partitions=1, replication_factor=1)
             admin_client.create_topics([new_topic])
 
+        self.map = OccupancyGrid()
+        self.map.header.seq = 0
+        self.map_md = MapMetaData()
+        self.map_seq = 0
+        self.have_map = False
+        
         # Subscribe to map_updates topic
         self.consumer.subscribe(['map_updates'])
-
-        self.map = OccupancyGrid()
-        self.map_md = MapMetaData()
-        self.have_map = False
 
     def get_cached_map(self):
         # Retry for 10 seconds to get the cached map
@@ -94,7 +96,7 @@ class MapSubscriber:
         return False
     
     def run(self):
-        rate = rospy.Rate(10)  # 10 Hz
+        rate = rospy.Rate(0.5)  # 0.5 Hz
         while not rospy.is_shutdown():
             # Consume messages from Kafka topic
             msg = self.consumer.poll(1.0)
@@ -109,9 +111,14 @@ class MapSubscriber:
                 print(f"Received map update: {map_update}")
                 self.process_map_update(map_update)
 
+            self.map.header.stamp = rospy.Time.now()
+            self.map_seq += 1
+            self.map.header.seq = self.map_seq
+        
             # Publish map to ROS topic
-            self.map_publisher.publish(self.map)
             self.map_md_publisher.publish(self.map_md)
+            self.map_publisher.publish(self.map)
+            print("Published Map")
 
             rate.sleep()
 
