@@ -118,7 +118,6 @@ class MapSubscriber:
             # Publish map to ROS topic
             self.map_md_publisher.publish(self.map_md)
             self.map_publisher.publish(self.map)
-            print("Published Map")
 
             rate.sleep()
 
