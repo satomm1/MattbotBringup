@@ -1,6 +1,7 @@
 import rospy
 import json
 import numpy as np
+import requests
 
 from nav_msgs.msg import OccupancyGrid, MapMetaData
 
@@ -11,14 +12,13 @@ from confluent_kafka.admin import AdminClient, NewTopic
 from pyignite import Client
 
 class MapSubscriber:
-    def __init__(self, ignite_host='192.168.50.2', ignite_port=10800, bootstrap_servers='192.168.50.2:29094'):
+    def __init__(self, server_url='http://192.168.50.2:8000', bootstrap_servers='192.168.50.2:29094'):
 
         # initialize ROS node
         rospy.init_node('map_subscriber', anonymous=True)
 
-        # Connect to Ignite server
-        self.client = Client()
-        self.client.connect(ignite_host, ignite_port)
+        # GraphQL endpoint server
+        self.server_url = server_url
 
         # Create map publisher
         self.map_publisher = rospy.Publisher('map', OccupancyGrid, queue_size=10)
@@ -43,6 +43,24 @@ class MapSubscriber:
         self.map_md = MapMetaData()
         self.map_seq = 0
         self.have_map = False
+
+        self.map_query = """ 
+                            {
+                                map {
+                                    width
+                                    height
+                                    origin_x
+                                    origin_y
+                                    origin_z
+                                    origin_orientation_x
+                                    origin_orientation_y
+                                    origin_orientation_z
+                                    origin_orientation_w
+                                    resolution
+                                    occupancy
+                                }
+                            }
+                        """
         
         # Subscribe to map_updates topic
         self.consumer.subscribe(['map_updates'])
@@ -52,39 +70,39 @@ class MapSubscriber:
         start_time = time.time()
         while time.time() - start_time < 10:
             try:
-                # Get the cached map from Ignite
-                map_data = self.client.get_cache('map').get(1)
-                map_metadata = self.client.get_cache('map_metadata').get(1)
-                if map_data:
+                # Get the map
+                response = requests.post(self.server_url, json={'query': self.map_query})
+                if response.status_code == 200:
+                    data = response.json()
+                    map_data = data.get('data', {}).get('map', {})
+                
                     self.have_map = True
-
-                    map_metadata = json.loads(map_metadata)
 
                     # Convert the strings into the ROS Occupancy grid
                     self.map.header.frame_id = 'map'
-                    self.map.info.width = map_metadata['width']
-                    self.map.info.height = map_metadata['height']
-                    self.map.info.resolution = map_metadata['resolution']
-                    self.map.info.origin.position.x = map_metadata['origin.position.x']
-                    self.map.info.origin.position.y = map_metadata['origin.position.y']
-                    self.map.info.origin.position.z = map_metadata['origin.position.z']
-                    self.map.info.origin.orientation.x = map_metadata['origin.orientation.x']
-                    self.map.info.origin.orientation.y = map_metadata['origin.orientation.y']
-                    self.map.info.origin.orientation.z = map_metadata['origin.orientation.z']
-                    self.map.info.origin.orientation.w = map_metadata['origin.orientation.w']
-                    self.map.data = np.frombuffer(map_data, dtype=int)
+                    self.map.info.width = map_data.get('width')
+                    self.map.info.height = map_data.get('height')
+                    self.map.info.resolution = map_data.get('resolution')
+                    self.map.info.origin.position.x = map_data.get('origin_x')
+                    self.map.info.origin.position.y = map_data.get('origin_y')
+                    self.map.info.origin.position.z = map_data.get('origin_z')
+                    self.map.info.origin.orientation.x = map_data.get('origin_orientation_x')
+                    self.map.info.origin.orientation.y = map_data.get('origin_orientation_y')
+                    self.map.info.origin.orientation.z = map_data.get('origin_orientation_z')
+                    self.map.info.origin.orientation.w = map_data.get('origin_orientation_w')
+                    self.map.data = map_data.get('occupancy')
 
                     self.map_md.map_load_time = rospy.Time.now()
-                    self.map_md.resolution = map_metadata['resolution']
-                    self.map_md.width = map_metadata['width']
-                    self.map_md.height = map_metadata['height']
-                    self.map_md.origin.position.x = map_metadata['origin.position.x']
-                    self.map_md.origin.position.y = map_metadata['origin.position.y']
-                    self.map_md.origin.position.z = map_metadata['origin.position.z']
-                    self.map_md.origin.orientation.x = map_metadata['origin.orientation.x']
-                    self.map_md.origin.orientation.y = map_metadata['origin.orientation.y']
-                    self.map_md.origin.orientation.z = map_metadata['origin.orientation.z']
-                    self.map_md.origin.orientation.w = map_metadata['origin.orientation.w']
+                    self.map_md.resolution = map_data.get('resolution')
+                    self.map_md.width = map_data.get('width')
+                    self.map_md.height = map_data.get('height')
+                    self.map_md.origin.position.x = map_data.get('origin_x')
+                    self.map_md.origin.position.y = map_data.get('origin_y')
+                    self.map_md.origin.position.z = map_data.get('origin_z')
+                    self.map_md.origin.orientation.x = map_data.get('origin_orientation_x')
+                    self.map_md.origin.orientation.y = map_data.get('origin_orientation_y')
+                    self.map_md.origin.orientation.z = map_data.get('origin_orientation_z')
+                    self.map_md.origin.orientation.w = map_data.get('origin_orientation_w')
                     
                     self.map_publisher.publish(self.map)
                     self.map_md_publisher.publish(self.map_md)
@@ -131,16 +149,10 @@ class MapSubscriber:
             x, y = key
             self.map.data[x + y * self.map.info.width] = value
 
-    def disconnect(self):
-        # Disconnect from Ignite server
-        self.client.close()
-
-
 
 if __name__ == '__main__':
     map_subscriber = MapSubscriber()
     success = map_subscriber.get_cached_map()
-    map_subscriber.disconnect()
     if success:
         print("Received cached map")
         map_subscriber.run()
