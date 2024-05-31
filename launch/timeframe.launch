@@ -14,6 +14,10 @@
     <!-- Add any additional node-specific parameters here -->
   </node>
 
+  <node pkg="$(arg package)" type="goal_handler.py" name="goal_handler_node" output="screen">
+    <!-- Add any additional node-specific parameters here -->
+  </node>
+
   <!-- Launch the twist multiplexer -->
   <include file="$(find twist_mux)/launch/twist_mux.launch">
     <arg name="output_loc" value="log"/>
@@ -44,11 +48,11 @@
     <arg name="node_name" default="kafka_producer_odom"/>
   </include>
 
-  <include file="$(find mattbot_kafka_connector)/launch/kafka_video_producer.launch">
+  <!-- <include file="$(find mattbot_kafka_connector)/launch/kafka_video_producer.launch">
     <arg name="ros_topic" default="/camera/color/image_raw"/>
     <arg name="kafka_topic" default="video"/>
     <arg name="node_name" default="kafka_producer_video"/>
-  </include>
+  </include> -->
 
   <!-- Launch the Monte Carlo Localization -->
   <include file="$(find mattbot_mcl)/launch/mcl.launch">
@@ -58,5 +62,7 @@
   <include file="$(find mattbot_navigation)/launch/localize_and_navigate.launch">
     <!-- No arguments needed -->
   </include>
+
+  
 
 </launch>
