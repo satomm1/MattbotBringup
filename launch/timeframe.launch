@@ -48,6 +48,11 @@
     <arg name="node_name" default="kafka_producer_odom"/>
   </include>
 
+  <include file="$(find mattbot_kafka_connector)/launch/kafka_producer.launch">
+    <arg name="topic" default="cmd_smoothed_path"/>
+    <arg name="node_name" default="kafka_producer_path"/>
+  </include>
+
   <!-- <include file="$(find mattbot_kafka_connector)/launch/kafka_video_producer.launch">
     <arg name="ros_topic" default="/camera/color/image_raw"/>
     <arg name="kafka_topic" default="video"/>
