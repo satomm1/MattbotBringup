@@ -7,7 +7,7 @@ import requests
 from geometry_msgs.msg import Pose2D
 
 class GraphQLClient:
-    def __init__(self, server_url='http://192.168.50.2:8000'):
+    def __init__(self, server_url='http://192.168.50.2:8000/graphql'):
         self.robot_id = os.environ.get('ROBOT_ID')
         self.server_url = server_url
 

@@ -12,7 +12,7 @@ from confluent_kafka.admin import AdminClient, NewTopic
 from pyignite import Client
 
 class MapSubscriber:
-    def __init__(self, server_url='http://192.168.50.2:8000', bootstrap_servers='192.168.50.2:29094'):
+    def __init__(self, server_url='http://192.168.50.2:8000/graphql', bootstrap_servers='192.168.50.2:29094'):
 
         # initialize ROS node
         rospy.init_node('map_subscriber', anonymous=True)
@@ -108,6 +108,8 @@ class MapSubscriber:
                     self.map_md_publisher.publish(self.map_md)
 
                     return True
+                else:
+                    print(f"Error retrieving map: {response.status_code}")
             except Exception as e:
                 print(f"Error retrieving map: {e}")
             time.sleep(1)
