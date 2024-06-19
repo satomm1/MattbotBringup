@@ -11,6 +11,10 @@ from confluent_kafka.admin import AdminClient, NewTopic
 
 from pyignite import Client
 
+"""
+Polls the server for the map and publishes it to the /map topic
+"""
+
 class MapSubscriber:
     def __init__(self, server_url='http://192.168.50.2:8000/graphql', bootstrap_servers='192.168.50.2:29094'):
 

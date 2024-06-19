@@ -6,6 +6,10 @@ import os
 import requests
 from geometry_msgs.msg import Pose2D
 
+""" 
+Polls the server for the next goal and publishes it to the /external_goal topic
+"""
+
 class GraphQLClient:
     def __init__(self, server_url='http://192.168.50.2:8000/graphql'):
         self.robot_id = os.environ.get('ROBOT_ID')

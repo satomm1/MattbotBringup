@@ -18,6 +18,9 @@ from std_msgs.msg import Float32
 
 BAUD_RATE = 1000000 # Baud rate for SPI
 
+"""
+Communicates with the MCU to send and receive data via SPI.
+"""
 
 class MCU_Comms:
     """
