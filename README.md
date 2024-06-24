@@ -1,5 +1,5 @@
 # Bringup
-This package is for general bringup of the robot. The general functions of the scripts and launch files are described below:
+This package is for general bringup of the robot. The general functions of the scripts and launch files are described below. For information on setting up a docker environment for these files on an NVIDIA Jetson, refer to [EnvironmentSetup.md](EnvironmentSetup.md).
 
 ### Scripts
 - **mcu_comms.py**: This file handles communication between the Jetson (onboard computer) and the microcontroller (which is used for motor control and low level sensors). Communication is handled through the SPI protocol and occurs at 1 MHz baud rate. This script sends wheel velocity commands via SPI, and receives IMU and odometry data from the MCU.
