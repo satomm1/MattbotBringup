@@ -32,6 +32,11 @@
   <include file="$(find astra_camera)/launch/astra.launch">
     <!-- No arguments needed -->
   </include>
+
+  <!-- Launch the Image Detector -->
+  <!-- <include file="$(find mattbot_image_detection)/launch/detect_coco.launch"> -->
+    <!-- No arguments needed -->
+  <!-- </include> -->
   
   <!-- Launch the different kafka producers -->
   <include file="$(find mattbot_kafka_connector)/launch/kafka_transform_producer.launch">
