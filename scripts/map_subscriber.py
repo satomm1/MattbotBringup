@@ -3,6 +3,7 @@ import json
 import numpy as np
 import requests
 import rospkg
+from rospy_message_converter import message_converter
 import os
 
 from nav_msgs.msg import OccupancyGrid, MapMetaData
@@ -117,6 +118,10 @@ class MapSubscriber:
                     data_path = pkg_path + '/lookup_table/' + self.map_name + '.npy'
                     current_map_data_path = pkg_path + '/lookup_table/current_map.npy'
                     
+                    # Save data to file
+                    with open(pkg_path + '/map_json/current_map.json', 'w') as json_file:
+                        json.dump(data, json_file, indent=4)
+
                     # Check if file exists and load it
                     if os.path.exists(data_path):
                         lookup_table = np.load(data_path)
