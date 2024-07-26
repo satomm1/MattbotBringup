@@ -177,8 +177,15 @@ class MCU_Comms:
         """
         self.mcu_startup()
         
-        # Execute loop at 200 Hz: every topic published at 200/4=50 Hz
-        rate = rospy.Rate(200)
+        # Execute loop at 300 Hz: every topic published at 300/6=50 Hz
+        rate = rospy.Rate(300)
+
+        # Variables to save throughout the loop
+        acc_x = 0
+        acc_y = 0
+        ang_vel_z = 0
+        qx = 0
+        qy = 0
 
         sensor_sequence = 0  # Sequence number for sensor messages
         while not rospy.is_shutdown():
@@ -280,6 +287,40 @@ class MCU_Comms:
                 acc_y = bytes_to_float(list(reversed(rcvd[5:9])))
                 ang_vel_z = bytes_to_float(list(reversed(rcvd[9:13])))
                 
+                # imu = Imu()
+                # # provide header information
+                # imu.header.stamp = rospy.Time.now()
+                # imu.header.frame_id = "imu"
+                # imu.header.seq = sensor_sequence
+                
+                # # Load the linear accel data
+                # imu.linear_acceleration.x = acc_x
+                # imu.linear_acceleration.y = acc_y
+                # imu.linear_acceleration.z = 0
+                
+                # # Load the angular velocity data
+                # imu.angular_velocity.x = 0
+                # imu.angular_velocity.y = 0
+                # imu.angular_velocity.z = ang_vel_z
+                
+                # # Don't have orientation estimate so set this as the flag
+                # imu.orientation_covariance[0] = -1.0
+                
+                # self.imu_pub.publish(imu)  # actually publish the data                
+
+                if self.stream_with_kafka:
+                    imu_dict = message_converter.convert_ros_message_to_dictionary(imu)
+                    imu_dict['robot'] = self.robot_id
+                    # self.producer.produce("imu", value=imu_dict)
+
+            elif rcvd[0] == 15:  # Received IMU Orientation XY data
+                qx = bytes_to_float(list(reversed(rcvd[1:5])))
+                qy = bytes_to_float(list(reversed(rcvd[5:9])))
+
+            elif rcvd[0] == 16:  # Received IMU Orientation ZW data
+                qz = bytes_to_float(list(reversed(rcvd[1:5])))
+                qw = bytes_to_float(list(reversed(rcvd[5:9])))
+
                 imu = Imu()
                 # provide header information
                 imu.header.stamp = rospy.Time.now()
@@ -296,15 +337,17 @@ class MCU_Comms:
                 imu.angular_velocity.y = 0
                 imu.angular_velocity.z = ang_vel_z
                 
-                # Don't have orientation estimate so set this as the flag
-                imu.orientation_covariance[0] = -1.0
+                # Load orientation quaternion
+                imu.orientation.x = qx
+                imu.orientation.y = qy
+                imu.orientation.z = qz
+                imu.orientation.w = qw
+
+                imu.orientation_covariance[0] = 0.0001
+                imu.orientation_covariance[4] = 0.0001
+                imu.orientation_covariance[8] = 0.0001
                 
                 self.imu_pub.publish(imu)  # actually publish the data
-
-                if self.stream_with_kafka:
-                    imu_dict = message_converter.convert_ros_message_to_dictionary(imu)
-                    imu_dict['robot'] = self.robot_id
-                    # self.producer.produce("imu", value=imu_dict)
                 
             elif rcvd[0] == 10: # Received reflective sensor data
                 right_sensor = bytes_to_unsigned_int(rcvd[1], rcvd[2])
