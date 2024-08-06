@@ -42,7 +42,7 @@
     <!-- No arguments needed -->
   </include>
 
-  <include file="$(find mattbot_navigation)/launch/localize_and_navigate.launch">
+  <include file="$(find mattbot_navigation)/launch/localize_and_navigate_combined_map.launch">
     <!-- No arguments needed -->
   </include>
 
