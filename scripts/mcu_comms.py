@@ -178,7 +178,7 @@ class MCU_Comms:
         self.mcu_startup()
         
         # Execute loop at 300 Hz: every topic published at 300/6=50 Hz
-        rate = rospy.Rate(300)
+        rate = rospy.Rate(200)
 
         # Variables to save throughout the loop
         acc_x = 0
