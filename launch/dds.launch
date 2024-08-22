@@ -33,9 +33,9 @@
   </include>
 
   <!-- Launch the Image Detector -->
-  <!-- <include file="$(find mattbot_image_detection)/launch/detect_coco.launch"> -->
+  <include file="$(find mattbot_image_detection)/launch/cone_dist.launch">
     <!-- No arguments needed -->
-  <!-- </include> -->
+  </include>
 
   <!-- Launch the Monte Carlo Localization -->
   <include file="$(find mattbot_mcl)/launch/mcl.launch">
