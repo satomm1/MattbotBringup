@@ -46,4 +46,8 @@
     <!-- No arguments needed -->
   </include>
 
+  <include file="$(find mattbot_dds)/launch/comm_manager.launch">
+    <!-- No arguments needed -->
+  </include>
+
 </launch>
