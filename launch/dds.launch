@@ -50,4 +50,8 @@
     <!-- No arguments needed -->
   </include>
 
+  <include file="$(find mattbot_dds)/launch/heartbeat.launch">
+    <!-- No arguments needed -->
+  </include>
+
 </launch>
