@@ -4,6 +4,7 @@ import spidev
 import struct
 import socket
 import json
+import numpy as np
 
 from confluent_kafka import Producer, KafkaException, KafkaError
 from confluent_kafka.admin import AdminClient, NewTopic
@@ -66,9 +67,9 @@ class MCU_Comms:
         self.transform_stamped_cam.child_frame_id = "camera_link"
         self.transform_stamped_cam.transform.translation.x = 0.127
         self.transform_stamped_cam.transform.translation.y = 0
-        self.transform_stamped_cam.transform.translation.z = 0
+        self.transform_stamped_cam.transform.translation.z = 0.7858125
                 
-        rotation = quaternion_from_euler(0,0,0)
+        rotation = quaternion_from_euler(np.pi,0,0)
         rotation = Quaternion(*rotation)        
         self.transform_stamped_cam.transform.rotation.x = rotation.x
         self.transform_stamped_cam.transform.rotation.y = rotation.y
