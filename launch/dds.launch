@@ -33,7 +33,7 @@
   </include>
 
   <!-- Launch the Image Detector -->
-  <include file="$(find mattbot_image_detection)/launch/cone_person_dist.launch">
+  <include file="$(find mattbot_image_detection)/launch/cone_person_dist_tall.launch">
     <!-- No arguments needed -->
   </include>
 
