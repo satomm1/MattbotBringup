@@ -15,7 +15,7 @@ from sensor_msgs.msg import Imu
 from nav_msgs.msg import Odometry
 from tf2_msgs.msg import TFMessage
 from tf.transformations import quaternion_from_euler
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, UInt8
 
 BAUD_RATE = 1000000 # Baud rate for SPI
 
@@ -53,6 +53,10 @@ class MCU_Comms:
         self.spi.mode = 0b11  # CPOL = 1, CPHA = 1 (i.e. clock is high when idle, data is clocked in on rising edge)
 
         self.robot_id = 0x00
+
+        self.button_status = [False, False, False]
+        # Publisher for button status
+        self.button_pub = rospy.Publisher('/button_status', UInt8, queue_size=10)
 
         # Initialize linear/angular velocity commands
         self.lin_cmd = 0.0
@@ -354,6 +358,34 @@ class MCU_Comms:
                 right_sensor = bytes_to_unsigned_int(rcvd[1], rcvd[2])
                 front_sensor = bytes_to_unsigned_int(rcvd[3], rcvd[4])
                 left_sensor = bytes_to_unsigned_int(rcvd[5], rcvd[6])
+                button_status = rcvd[7]
+
+                # Bits of button status indicates if each button is pressed
+                button1_pressed = (button_status & 0b00000001) == 0b00000001
+                button2_pressed = (button_status & 0b00000010) == 0b00000010
+                button3_pressed = (button_status & 0b00000100) == 0b00000100
+                
+                if (button1_pressed != self.button_status[0]):
+                    self.button_status[0] = button1_pressed
+                    self.button_pub.publish(button_status)
+                    if button1_pressed:
+                        print("Button 1 pressed")
+                    else:
+                        print("Button 1 released")
+                if (button2_pressed != self.button_status[1]):
+                    self.button_status[1] = button2_pressed
+                    self.button_pub.publish(button_status)
+                    if button2_pressed:
+                        print("Button 2 pressed")
+                    else:
+                        print("Button 2 released")
+                if (button3_pressed != self.button_status[2]):
+                    self.button_status[2] = button3_pressed
+                    self.button_pub.publish(button_status)
+                    if button3_pressed:
+                        print("Button 3 pressed")
+                    else:
+                        print("Button 3 released")
                 
                 # Actually publish the data
                 self.right_sensor_pub.publish(float(right_sensor))
