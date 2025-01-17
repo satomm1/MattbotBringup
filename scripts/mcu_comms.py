@@ -47,7 +47,17 @@ class MCU_Comms:
 
         # Create the SPI object to facilitate SPI communication via Jetson and MCU
         self.spi = spidev.SpiDev()  # Create SPI object
-        self.spi.open(0,0)  # open spi port 0, device (CS) 0
+
+        # Get ROBOT_ID from environment variable
+        robot_id_env = os.getenv('ROBOT_ID')
+        if robot_id_env == 1:
+            self.spi.open(2,0)  # open spi port 2, device (CS) 0
+        elif robot_id_env == 2:
+            self.spi.open(0,0)  # open spi port 0, device (CS) 0
+        else:
+            self.spi.open(0,0)  # open spi port 0, device (CS) 0
+
+            
         self.spi.max_speed_hz = BAUD_RATE  
         self.spi.mode = 0b11  # CPOL = 1, CPHA = 1 (i.e. clock is high when idle, data is clocked in on rising edge)
 
